@@ -215,7 +215,8 @@
     { "id": "utwor-144", "title": "Zderzenie Światów", "artist": "Voltage Vibe", "src": "/music/Utwor (144).mp3", "cover": "https://placehold.co/120x120/222/fff?text=144", "tags": ["rock", "alt"], "weight": 2, "type": "song", "golden": false },
     { "id": "utwor-145", "title": "Zaćmienie", "artist": "Data Stream", "src": "/music/Utwor (145).mp3", "cover": "https://placehold.co/120x120/222/fff?text=145", "tags": ["ambient", "chill"], "weight": 3, "type": "song", "golden": false },
     { "id": "utwor-146", "title": "Renderowanie", "artist": "Cybernetic Sounds", "src": "/music/Utwor (146).mp3", "cover": "https://placehold.co/120x120/222/fff?text=146", "tags": ["techno", "house"], "weight": 5, "type": "song", "golden": false },
-    { "id": "utwor-147", "title": "Miasto ze Szkła", "artist": "Neon Pulse", "src": "/music/Utwor (147).mp3", "cover": "https://placehold.co/120x120/222/fff?text=147", "tags": ["electro", "synth"], "weight": 3, "type": "song", "golden": false }
+    { "id": "utwor-147", "title": "Miasto ze Szkła", "artist": "Neon Pulse", "src": "/music/Utwor (147).mp3", "cover": "https://placehold.co/120x120/222/fff?text=147", "tags": ["electro", "synth"], "weight": 3, "type": "song", "golden": false },
+    { "id": "daremon-lawaaj", "title": "Lawaaj en donder", "artist": "DAREMON", "src": "/music/DAREMON Lawaaj en donder.mp3", "cover": "https://placehold.co/120x120/ffd700/000000?text=GOLD!", "tags": ["dutch", "fun", "daremon"], "weight": 4, "type": "song", "golden": true }
   ]
 }
 
