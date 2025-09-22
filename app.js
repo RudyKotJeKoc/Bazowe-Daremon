@@ -83,11 +83,20 @@ document.addEventListener('DOMContentLoaded', () => {
         errorCloseBtn: document.getElementById('error-close-btn'),
         errorRetryBtn: document.getElementById('error-retry-btn'),
         themeSwitcher: document.querySelector('.theme-switcher'),
+        songDedication: {
+            form: document.getElementById('song-dedication-form'),
+            fromInput: document.getElementById('song-dedication-from'),
+            toInput: document.getElementById('song-dedication-to'),
+            messageInput: document.getElementById('song-dedication-message'),
+            feedback: document.getElementById('song-dedication-feedback'),
+            intro: document.getElementById('song-dedication-intro'),
+        },
     };
 
     // --- State Management ---
     let audioContext, analyser;
     const players = [new Audio(), new Audio()];
+    const SONG_DEDICATION_TARGET = '/api/song-dedications'; // Pas dit aan naar je API of mailadres
     let activePlayerIndex = 0;
     players.forEach(p => { p.crossOrigin = "anonymous"; p.preload = "auto"; });
 
@@ -97,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         config: {},
         history: [],
         messages: [],
+        songDedications: [],
         reviews: {},
         currentTrack: null,
         nextTrack: null,
@@ -191,6 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 el.setAttribute('aria-label', t(el.dataset.i18nAriaLabel));
             }
         });
+
+        updateSongDedicationIntro();
     }
 
     // --- Initialisatie ---
@@ -604,6 +616,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadStateFromLocalStorage() {
         state.likes = safeLocalStorage('likes') || {};
         state.messages = safeLocalStorage('messages') || [];
+        state.songDedications = safeLocalStorage('songDedications') || [];
         state.history = safeLocalStorage('history') || [];
         state.reviews = safeLocalStorage('reviews') || {};
         state.events = safeLocalStorage('events') || {};
@@ -614,6 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveTheme(theme) { safeLocalStorage('theme', theme); }
     function saveLikes() { safeLocalStorage('likes', state.likes); }
     function saveMessages() { safeLocalStorage('messages', state.messages); }
+    function saveSongDedications() { safeLocalStorage('songDedications', state.songDedications); }
     function saveReviews() { safeLocalStorage('reviews', state.reviews); }
     function saveEvents() { safeLocalStorage('events', state.events); }
 
@@ -822,6 +836,102 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- Song Dedications ---
+    function describeSongDedicationTarget() {
+        if (!SONG_DEDICATION_TARGET) return '';
+        if (SONG_DEDICATION_TARGET === 'navigator.share') {
+            return t('songDedicationTargetShare');
+        }
+        if (SONG_DEDICATION_TARGET.startsWith('mailto:')) {
+            return SONG_DEDICATION_TARGET.replace('mailto:', '');
+        }
+        return SONG_DEDICATION_TARGET;
+    }
+
+    function updateSongDedicationIntro() {
+        if (!dom.songDedication.intro) return;
+        dom.songDedication.intro.textContent = t('songDedicationIntro', {
+            target: describeSongDedicationTarget()
+        });
+    }
+
+    async function handleSongDedicationSubmit(e) {
+        e.preventDefault();
+        if (!dom.songDedication.form || !dom.songDedication.messageInput) return;
+
+        const fromValue = dom.songDedication.fromInput ? dom.songDedication.fromInput.value : '';
+        const toValue = dom.songDedication.toInput ? dom.songDedication.toInput.value : '';
+        const messageValue = dom.songDedication.messageInput.value || '';
+
+        const entry = {
+            from: sanitizeHTML(fromValue.trim()),
+            to: sanitizeHTML(toValue.trim()),
+            message: sanitizeHTML(messageValue.trim()),
+            timestamp: new Date().toISOString()
+        };
+
+        if (!entry.message) return;
+
+        const delivered = await sendSongDedication(entry);
+        state.songDedications.push({ ...entry, delivered });
+        saveSongDedications();
+
+        if (dom.songDedication.feedback) {
+            dom.songDedication.feedback.textContent = delivered
+                ? t('songDedicationFeedbackSuccess', { target: describeSongDedicationTarget() })
+                : t('songDedicationFeedbackError', { target: describeSongDedicationTarget() });
+            dom.songDedication.feedback.classList.toggle('success', delivered);
+            dom.songDedication.feedback.classList.toggle('error', !delivered);
+        }
+
+        if (delivered && dom.songDedication.form) {
+            dom.songDedication.form.reset();
+        }
+    }
+
+    async function sendSongDedication(entry) {
+        if (!SONG_DEDICATION_TARGET) return false;
+
+        try {
+            if (SONG_DEDICATION_TARGET === 'navigator.share' && navigator.share) {
+                await navigator.share({
+                    title: 'Song Dedication',
+                    text: `${entry.from ? `${entry.from} → ` : ''}${entry.to || ''}\n${entry.message}`
+                });
+                return true;
+            }
+
+            if (SONG_DEDICATION_TARGET.startsWith('mailto:')) {
+                const subject = encodeURIComponent('Song Dedication');
+                const lines = [
+                    entry.from ? `From: ${entry.from}` : null,
+                    entry.to ? `To: ${entry.to}` : null,
+                    '',
+                    entry.message
+                ].filter(Boolean);
+                const body = encodeURIComponent(lines.join('\n'));
+                const mailtoUrl = `${SONG_DEDICATION_TARGET}?subject=${subject}&body=${body}`;
+                window.open(mailtoUrl, '_blank', 'noopener');
+                return true;
+            }
+
+            const response = await fetch(SONG_DEDICATION_TARGET, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(entry)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            return true;
+        } catch (error) {
+            console.error('Song dedication delivery failed:', error);
+            return false;
+        }
+    }
+
     // --- Kalender Logica ---
     function renderCalendar() {
         if (!dom.calendar.grid || !dom.calendar.header) return;
@@ -985,8 +1095,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (dom.player.progressContainer) dom.player.progressContainer.addEventListener('click', seekTrack);
         if (dom.player.commentForm) dom.player.commentForm.addEventListener('submit', handleRatingSubmit);
-        
-        players.forEach((player) => { 
+        if (dom.songDedication.form) dom.songDedication.form.addEventListener('submit', handleSongDedicationSubmit);
+
+        players.forEach((player) => {
             player.addEventListener('timeupdate', () => { 
                 if (player === players[activePlayerIndex]) updateProgressBar(); 
             }); 
