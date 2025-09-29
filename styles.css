@@ -281,6 +281,97 @@ body, #app-container, #main-content, #player-ui, #player-controls, #side-panel, 
 #messages-list li { padding: 8px; border-bottom: 1px solid #333; opacity: 0; animation: fadeInMessage 0.5s forwards; }
 #messages-list i { color: #888; }
 @keyframes fadeInMessage { to { opacity: 1; } }
+.section-intro {
+    font-size: 0.85em;
+    color: #cccccc;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+#song-dedication-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+#song-dedication-form textarea,
+#song-dedication-form input {
+    width: 100%;
+    background: #222;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-family: 'Orbitron', sans-serif;
+    box-sizing: border-box;
+}
+#song-dedication-form textarea:focus,
+#song-dedication-form input:focus {
+    border-color: var(--secondary-accent);
+    outline: none;
+}
+#song-dedication-form button {
+    align-self: flex-start;
+    padding: 0.6rem 1.5rem;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-family);
+    font-weight: 700;
+    background: var(--secondary-accent);
+    color: #000;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+#song-dedication-form button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px var(--secondary-accent);
+}
+.form-feedback {
+    font-size: 0.75em;
+    min-height: 1.2em;
+    margin-top: 0.5rem;
+    color: var(--secondary-accent);
+}
+.form-feedback.error {
+    color: #ff6b6b;
+}
+#song-dedication-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 220px;
+    overflow-y: auto;
+    font-size: 0.8em;
+}
+#song-dedication-list li {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.04);
+}
+#song-dedication-list li .song-dedication-name {
+    display: block;
+    font-weight: 700;
+    color: var(--secondary-accent);
+    margin-bottom: 0.35rem;
+}
+#song-dedication-list li .song-dedication-words {
+    display: block;
+    line-height: 1.4;
+    color: #e0e0e0;
+}
+#song-dedication-list li .song-dedication-time {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.7em;
+    color: #888;
+}
+#song-dedication-list li.empty-state {
+    text-align: center;
+    font-style: italic;
+    color: #888;
+}
 #autoplay-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; transition: opacity 0.5s ease-out; }
 #welcome-greeting { font-size: 1.2rem; margin-bottom: 20px; max-width: 80%; }
 #sticky-player-info { text-align: left; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

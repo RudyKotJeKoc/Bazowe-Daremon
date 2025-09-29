@@ -70,6 +70,20 @@
                     </section>
 
                     <section class="content-box">
+                        <h3 data-i18n-key="songDedicationTitle"></h3>
+                        <p class="section-intro" data-i18n-key="songDedicationIntro"></p>
+                        <form id="song-dedication-form">
+                            <label for="song-words-input" data-i18n-key="songWordsLabel"></label>
+                            <textarea id="song-words-input" name="songWords" rows="3" maxlength="250" data-i18n-placeholder="songWordsPlaceholder" required aria-required="true"></textarea>
+                            <label for="song-name-input" data-i18n-key="songNameLabel"></label>
+                            <input id="song-name-input" name="songName" type="text" maxlength="60" data-i18n-placeholder="songNamePlaceholder" required aria-required="true" />
+                            <button type="submit" data-i18n-key="songDedicationSubmit"></button>
+                        </form>
+                        <p id="song-dedication-feedback" class="form-feedback" aria-live="polite"></p>
+                        <ul id="song-dedication-list" aria-live="polite"></ul>
+                    </section>
+
+                    <section class="content-box">
                         <h3 data-i18n-key="changeTheme"></h3>
                         <div class="theme-switcher">
                             <button id="theme-arburg" data-i18n-title="themeArburg" data-i18n-aria-label="themeArburgLabel"></button>

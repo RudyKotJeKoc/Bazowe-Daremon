@@ -48,6 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
             messagesList: document.getElementById('messages-list'),
             djMessageForm: document.getElementById('dj-message-form'),
             djMessageInput: document.getElementById('dj-message-input'),
+            songDedicationForm: document.getElementById('song-dedication-form'),
+            songWordsInput: document.getElementById('song-words-input'),
+            songNameInput: document.getElementById('song-name-input'),
+            songDedicationList: document.getElementById('song-dedication-list'),
+            songDedicationFeedback: document.getElementById('song-dedication-feedback'),
         },
         header: {
             listenerCount: document.getElementById('listener-count'),
@@ -97,12 +102,14 @@ document.addEventListener('DOMContentLoaded', () => {
         config: {},
         history: [],
         messages: [],
+        songDedications: [],
         reviews: {},
         currentTrack: null,
         nextTrack: null,
         isPlaying: false,
         isInitialized: false,
         lastMessageTimestamp: 0,
+        lastSongDedicationTimestamp: 0,
         songsSinceJingle: 0,
         likes: {},
         tempBoosts: {},
@@ -156,7 +163,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 backToRadio: "Terug naar Radio",
                 sendBtn: "Verstuur",
                 submitReview: "Verstuur Recensie",
-                hotkeysInfo: "Sneltoetsen: Spatie = Afspelen/Pauzeren, N = Volgende, L = Like, ↑↓ = Volume"
+                hotkeysInfo: "Sneltoetsen: Spatie = Afspelen/Pauzeren, N = Volgende, L = Like, ↑↓ = Volume",
+                songDedicationTitle: "Song Capsule",
+                songDedicationIntro: "Deel een paar woorden en wie er in jouw herinneringssong moet schitteren.",
+                songWordsLabel: "Jouw woorden",
+                songWordsPlaceholder: "Schrijf een korte tekst voor de song...",
+                songNameLabel: "Naam van de ster",
+                songNamePlaceholder: "Wie moeten we noemen?",
+                songDedicationSubmit: "Bewaar herinnering",
+                songDedicationThanks: "Bedankt! Je woorden zijn opgeslagen.",
+                songDedicationCooldown: "Even geduld – één herinnering per minuut.",
+                songDedicationMissing: "Vul zowel je woorden als een naam in.",
+                songDedicationEmpty: "Nog geen inzendingen. Wees de eerste om iets te delen!",
+                songDedicationTime: "Toegevoegd: {{timestamp}}"
             };
             i18n_apply();
         }
@@ -191,6 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 el.setAttribute('aria-label', t(el.dataset.i18nAriaLabel));
             }
         });
+
+        renderSongDedications();
     }
 
     // --- Initialisatie ---
@@ -208,6 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateWelcomeGreeting();
             updateOfflineStatus();
             renderMessages();
+            renderSongDedications();
             renderGoldenRecords();
             renderTopRated();
             populateMachineSelect();
@@ -604,6 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadStateFromLocalStorage() {
         state.likes = safeLocalStorage('likes') || {};
         state.messages = safeLocalStorage('messages') || [];
+        state.songDedications = safeLocalStorage('songDedications') || [];
         state.history = safeLocalStorage('history') || [];
         state.reviews = safeLocalStorage('reviews') || {};
         state.events = safeLocalStorage('events') || {};
@@ -614,6 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveTheme(theme) { safeLocalStorage('theme', theme); }
     function saveLikes() { safeLocalStorage('likes', state.likes); }
     function saveMessages() { safeLocalStorage('messages', state.messages); }
+    function saveSongDedications() { safeLocalStorage('songDedications', state.songDedications); }
     function saveReviews() { safeLocalStorage('reviews', state.reviews); }
     function saveEvents() { safeLocalStorage('events', state.events); }
 
@@ -822,6 +846,82 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function setSongDedicationFeedback(key, isError = false) {
+        if (!dom.sidePanel.songDedicationFeedback) return;
+        dom.sidePanel.songDedicationFeedback.textContent = key ? t(key) : '';
+        dom.sidePanel.songDedicationFeedback.classList.toggle('error', Boolean(isError));
+    }
+
+    function handleSongDedicationSubmit(event) {
+        event.preventDefault();
+        if (!dom.sidePanel.songWordsInput || !dom.sidePanel.songNameInput) return;
+
+        setSongDedicationFeedback('', false);
+
+        const now = Date.now();
+        if (now - state.lastSongDedicationTimestamp < 60000) {
+            setSongDedicationFeedback('songDedicationCooldown', true);
+            return;
+        }
+
+        const words = dom.sidePanel.songWordsInput.value.trim();
+        const name = dom.sidePanel.songNameInput.value.trim();
+
+        if (!words || !name) {
+            setSongDedicationFeedback('songDedicationMissing', true);
+            return;
+        }
+
+        const entry = {
+            words: sanitizeHTML(words),
+            name: sanitizeHTML(name),
+            timestamp: new Date().toLocaleString(state.language === 'nl' ? 'nl-NL' : 'pl-PL')
+        };
+
+        state.songDedications.push(entry);
+        state.songDedications = state.songDedications.slice(-15);
+        state.lastSongDedicationTimestamp = now;
+        saveSongDedications();
+        renderSongDedications();
+
+        if (dom.sidePanel.songDedicationForm) dom.sidePanel.songDedicationForm.reset();
+        setSongDedicationFeedback('songDedicationThanks', false);
+    }
+
+    function renderSongDedications() {
+        if (!dom.sidePanel.songDedicationList) return;
+        dom.sidePanel.songDedicationList.innerHTML = '';
+
+        if (!state.songDedications.length) {
+            const emptyItem = document.createElement('li');
+            emptyItem.classList.add('empty-state');
+            emptyItem.textContent = t('songDedicationEmpty');
+            dom.sidePanel.songDedicationList.appendChild(emptyItem);
+            return;
+        }
+
+        [...state.songDedications].reverse().forEach(entry => {
+            const item = document.createElement('li');
+
+            const nameEl = document.createElement('span');
+            nameEl.classList.add('song-dedication-name');
+            nameEl.innerHTML = entry.name;
+
+            const wordsEl = document.createElement('span');
+            wordsEl.classList.add('song-dedication-words');
+            wordsEl.innerHTML = entry.words;
+
+            const timeEl = document.createElement('span');
+            timeEl.classList.add('song-dedication-time');
+            timeEl.textContent = t('songDedicationTime', { timestamp: entry.timestamp });
+
+            item.appendChild(nameEl);
+            item.appendChild(wordsEl);
+            item.appendChild(timeEl);
+            dom.sidePanel.songDedicationList.appendChild(item);
+        });
+    }
+
     // --- Kalender Logica ---
     function renderCalendar() {
         if (!dom.calendar.grid || !dom.calendar.header) return;
@@ -1016,6 +1116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         if (dom.sidePanel.djMessageForm) dom.sidePanel.djMessageForm.addEventListener('submit', handleMessageSubmit);
+        if (dom.sidePanel.songDedicationForm) dom.sidePanel.songDedicationForm.addEventListener('submit', handleSongDedicationSubmit);
         if (dom.errorCloseBtn) dom.errorCloseBtn.addEventListener('click', () => {
             if (dom.errorOverlay) dom.errorOverlay.classList.add('hidden');
         });
